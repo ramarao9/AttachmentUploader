@@ -1,0 +1,56 @@
+
+.defaultContentCont{
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.dragDropCont{
+    height:150px;
+    width:99%;
+    position: relative;
+  }
+  
+  .dropZoneCont{
+  
+    display:flex;
+    border:2px dashed 	#D3D3D3;
+    align-items: center;
+    justify-content: center;
+    flex-flow: column;
+    padding:5px;
+    color:  rgb(68, 68, 68);
+    font-family: 'SegoeUI-Semibold', 'Segoe UI Semibold', 'Segoe UI Regular', 'Segoe UI';
+  }
+  
+  .uploadDivs{
+    position: absolute;
+    width: calc(100% - 12px);
+    height:calc(100% - 12px);
+  }
+  
+  .filesStatsCont{
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+  
+  .fileSpinnerCont{
+  
+  }
+  
+  .uploadStatusText{
+    color:white;
+    font-weight: 500;
+    margin:5px 0px;
+  }
+  
+  .uploadImgDD{
+    width:64px;
+    height:64px;
+  }

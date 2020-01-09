@@ -1,0 +1,27 @@
+{
+  "name": "attachmentupload",
+  "version": "1.0.0",
+  "description": "Easily upload attachment for Email and Notes",
+  "scripts": {
+    "build": "pcf-scripts build",
+    "clean": "pcf-scripts clean",
+    "rebuild": "pcf-scripts rebuild",
+    "start": "pcf-scripts start"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.26",
+    "@fortawesome/free-solid-svg-icons": "^5.12.0",
+    "@fortawesome/react-fontawesome": "^0.1.8",
+    "@types/node": "^10.12.18",
+    "@types/powerapps-component-framework": "^1.2.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-dropzone": "^10.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
+    "pcf-scripts": "^1",
+    "pcf-start": "^1"
+  }
+}
