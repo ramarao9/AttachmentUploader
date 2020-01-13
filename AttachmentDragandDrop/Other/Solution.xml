@@ -7,23 +7,26 @@
       <!-- Localized Solution Name in language code -->
       <LocalizedName description="AttachmentDragandDrop" languagecode="1033" />
     </LocalizedNames>
-    <Descriptions />
+     <Descriptions>
+        <!-- Description of Cds Publisher in language code -->
+        <Description description="https://github.com/ramarao9/AttachmentUploader" languagecode="1033" />
+      </Descriptions>
     <Version>1.0</Version>
     <!-- Solution Package Type: Unmanaged(0)/Managed(1)/Both(2)-->
     <Managed>2</Managed>
     <Publisher>
       <!-- Unique Publisher Name of Cds Solution -->
-      <UniqueName>ramasolutions</UniqueName>
+      <UniqueName>ramakoneru</UniqueName>
       <LocalizedNames>
         <!-- Localized Cds Publisher Name in language code-->
-        <LocalizedName description="ramasolutions" languagecode="1033" />
+        <LocalizedName description="Rama Koneru" languagecode="1033" />
       </LocalizedNames>
       <Descriptions>
         <!-- Description of Cds Publisher in language code -->
-        <Description description="ramasolutions" languagecode="1033" />
+        <Description description="" languagecode="1033" />
       </Descriptions>
       <EMailAddress xsi:nil="true"></EMailAddress>
-      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <SupportingWebsiteUrl xsi:nil="true">https://github.com/ramarao9/</SupportingWebsiteUrl>
       <!-- Customization Prefix for the Cds Publisher-->
       <CustomizationPrefix>ram</CustomizationPrefix>
       <!-- Derived Option Value Prefix for the Customization Prefix of Cds Publisher -->
@@ -35,7 +38,7 @@
           <AddressTypeCode>1</AddressTypeCode>
           <City xsi:nil="true"></City>
           <County xsi:nil="true"></County>
-          <Country xsi:nil="true"></Country>
+          <Country xsi:nil="true">USA</Country>
           <Fax xsi:nil="true"></Fax>
           <FreightTermsCode xsi:nil="true"></FreightTermsCode>
           <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
@@ -49,7 +52,7 @@
           <PostOfficeBox xsi:nil="true"></PostOfficeBox>
           <PrimaryContactName xsi:nil="true"></PrimaryContactName>
           <ShippingMethodCode>1</ShippingMethodCode>
-          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <StateOrProvince xsi:nil="true">MN</StateOrProvince>
           <Telephone1 xsi:nil="true"></Telephone1>
           <Telephone2 xsi:nil="true"></Telephone2>
           <Telephone3 xsi:nil="true"></Telephone3>

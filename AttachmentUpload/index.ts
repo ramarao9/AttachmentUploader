@@ -4,6 +4,11 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import { AttachmentUploader, UploadProps } from './AttachmentUploader';
 
 
+ interface EntityRef {
+	id: string,
+	entityName: string
+}
+
 export class AttachmentUpload implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
 	private UploadIconName: string = "uploadicn.png";
@@ -29,18 +34,13 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 	 * @param container If a control is marked control-type='standard', it will receive an empty div element within which it can render its content.
 	 */
 	public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement) {
-		let currentPageContext = context as any;
-		currentPageContext = currentPageContext ? currentPageContext["page"] : undefined;
-		if (currentPageContext && currentPageContext.entityId) {
-			this.uploadProps.id = currentPageContext.entityId;
-			this.uploadProps.entityName = currentPageContext.entityTypeName;
+		let entityRef = this.getEntityReference(context);
+		if (entityRef) {
+			this.uploadProps.id = entityRef.id
+			this.uploadProps.entityName = entityRef.entityName;
 			this.uploadProps.context = context;
 			this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
 			this.uploadProps.uploadIcon = this.getImageBase64();
-
-			// context.resources.getResource(this.UploadIconName,
-			// 	this.getImageResourceSuccess.bind(this, "png"),
-			// 	this.getImageResourceError.bind(this));
 		}
 		this.attachmentUploaderContainer = container;
 	}
@@ -60,17 +60,32 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 	}
 
 
+	private getEntityReference(context: ComponentFramework.Context<IInputs>): EntityRef | undefined {
+		let currentPageContext = context as any;
+		currentPageContext = currentPageContext ? currentPageContext["page"] : undefined;
+		if (currentPageContext && currentPageContext.entityId && currentPageContext.entityId !== "") {
+			var entityRef: EntityRef = { id: currentPageContext.entityId, entityName: currentPageContext.entityTypeName };
+			return entityRef;
+		}
+
+		return undefined;
+
+	}
+
 	/**
 	 * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
 	 * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
 	 */
 	public updateView(context: ComponentFramework.Context<IInputs>): void {
 		this.uploadProps.context = context;
-		let currentPageContext = context as any;
-		currentPageContext = currentPageContext ? currentPageContext["page"] : undefined;
-		if (currentPageContext && currentPageContext.entityId) {
-			this.uploadProps.id = currentPageContext.entityId;
+
+		let entityRef = this.getEntityReference(context);
+		if (entityRef) {
+			this.uploadProps.id = entityRef.id;
+			this.uploadProps.entityName = entityRef.entityName;
 		}
+		this.uploadProps.uploadIcon = this.getImageBase64();//when initially a new record tha's transitioning to an existing record, so the UI is now being updated to enable the content
+
 		ReactDOM.render(
 			React.createElement(
 				AttachmentUploader,

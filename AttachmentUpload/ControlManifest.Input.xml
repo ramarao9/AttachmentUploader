@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="0.0.4" display-name-key="AttachmentUpload" 
+  <control namespace="vij" constructor="AttachmentUpload" version="1.0.0" display-name-key="AttachmentUpload" 
            description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
