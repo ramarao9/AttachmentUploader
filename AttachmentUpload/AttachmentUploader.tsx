@@ -6,10 +6,16 @@ import { faSpinner, faRecordVinyl } from '@fortawesome/free-solid-svg-icons'
 
 export interface UploadProps {
     id: string;
-    entityName:string,
-    controlToRefresh:string|null,
-    uploadIcon:string,
+    entityName:string;
+    controlToRefresh:string|null;
+    uploadIcon:string;
     context: ComponentFramework.Context<IInputs>;
+}
+
+export interface FileInfo {
+  name: string;
+  type: string;
+  body: string;
 }
 
 export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadProps) => {
@@ -33,20 +39,24 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
         });
 
         const uploadFileToRecord = async (id: string, entity: string,
-             filename: string, body: string,context: ComponentFramework.Context<IInputs>)=>{
+        fileInfo:  FileInfo,context: ComponentFramework.Context<IInputs>)=>{
 
             let isActivityMimeAttachment = (entity.toLowerCase() === "email" || entity.toLowerCase() === "appointment");
             let attachmentRecord: ComponentFramework.WebApi.Entity = {};
             if (isActivityMimeAttachment) {
                 attachmentRecord["objectid_activitypointer@odata.bind"] = `/activitypointers(${id})`;
-                attachmentRecord["body"] = body;
+                attachmentRecord["body"] = fileInfo.body;
             }
             else {
                 attachmentRecord[`objectid_${entity}@odata.bind`] = `/${entity}s(${id})`;
-                attachmentRecord["documentbody"] = body;
+                attachmentRecord["documentbody"] = fileInfo.body;
             }
        
-            attachmentRecord["filename"] = filename;
+            if(fileInfo.type && fileInfo.type!==""){
+              attachmentRecord["mimetype"] =fileInfo.type;
+            }
+
+            attachmentRecord["filename"] = fileInfo.name;
             attachmentRecord["objecttypecode"] = entity;
             let attachmentEntity = isActivityMimeAttachment ? "activitymimeattachment" : "annotation";
             await context.webAPI.createRecord(attachmentEntity, attachmentRecord)
@@ -54,6 +64,10 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
 
 
         const uploadFilesToCRM = async (files: any) => {
+
+          try{
+
+          
             for(let i=0;i<acceptedFiles.length;i++)
             {
                 setCurrentUploadCount(i);
@@ -62,9 +76,16 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 let base64DataStr=base64Data as string;
                 var base64 =base64DataStr.replace(/^data:.+;base64,/, '');
                 
-                await uploadFileToRecord(uploadProps.id,uploadProps.entityName,
-                    file.name,base64,uploadProps.context);
+                let fileInfo:FileInfo ={name:file.name,type:file.type,body:base64};
+
+                await uploadFileToRecord(uploadProps.id,uploadProps.entityName,fileInfo,uploadProps.context);
             }
+          }
+          catch(e){         
+            let errorMessagePrefix=(acceptedFiles.length===1)?"An error has occurred while trying to upload the attachment.":"One or more errors occured when trying to upload the attachments.";
+            let errOptions={message:`${errorMessagePrefix} ${e.message}`};
+            uploadProps.context.navigation.openErrorDialog(errOptions)
+          }
 
             setTotalFileCount(0);
             let xrmObj: any = (window as any)["Xrm"];
