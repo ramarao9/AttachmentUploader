@@ -1,5 +1,5 @@
 # Attachment Uploader
-A Power App code component to easily upload one or more attachments on Dynamics365 records.
+A Power App code component to easily upload one or more attachments on Dynamics365 records. Works with Email and normal Notes attachments.
 
 
 ## Installation
@@ -30,6 +30,10 @@ Download the unmanaged/managed solution from the [Releases](https://github.com/r
    ![NewRecordState](https://ramarao.blob.core.windows.net/attachmentuploader/NewRecordState.jpg)
 
 
+
+* If using to upload note attachments, you could specify the name of the Timeline control as below to refresh after the upload
+   
+   ![TimelineRefresh](https://ramarao.blob.core.windows.net/attachmentuploader/TimelineControlRefresh.jpg)
 
 
 
