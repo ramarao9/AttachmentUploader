@@ -84,6 +84,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 			this.uploadProps.id = entityRef.id;
 			this.uploadProps.entityName = entityRef.entityName;
 		}
+		this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
 		this.uploadProps.uploadIcon = this.getImageBase64();//when initially a new record tha's transitioning to an existing record, so the UI is now being updated to enable the content
 
 		ReactDOM.render(

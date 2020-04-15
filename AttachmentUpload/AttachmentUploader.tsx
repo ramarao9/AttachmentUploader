@@ -65,6 +65,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
 
         const uploadFilesToCRM = async (files: any) => {
 
+         
           try{
 
           
@@ -77,8 +78,17 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 var base64 =base64DataStr.replace(/^data:.+;base64,/, '');
                 
                 let fileInfo:FileInfo ={name:file.name,type:file.type,body:base64};
+              let entityId = uploadProps.id;
+              let entityName = uploadProps.entityName;
 
-                await uploadFileToRecord(uploadProps.id,uploadProps.entityName,fileInfo,uploadProps.context);
+              if (entityId == null || entityId === "") {//this happens when the record is created and the user tries to upload
+                let currentPageContext = uploadProps.context as any;
+                currentPageContext = currentPageContext ? currentPageContext["page"] : undefined;
+                entityId = currentPageContext.entityId;
+                entityName = currentPageContext.entityTypeName;
+              }
+
+                await uploadFileToRecord(entityId,entityName,fileInfo,uploadProps.context);
             }
           }
           catch(e){         
@@ -89,7 +99,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
 
             setTotalFileCount(0);
             let xrmObj: any = (window as any)["Xrm"];
-            if (xrmObj && xrmObj.Page && xrmObj.Page) {
+            if (xrmObj && xrmObj.Page && uploadProps.controlToRefresh) {
                 var controlToRefresh = xrmObj.Page.getControl(uploadProps.controlToRefresh);
                 if (controlToRefresh) {
                     controlToRefresh.refresh();

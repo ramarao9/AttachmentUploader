@@ -1,6 +1,6 @@
 {
   "name": "attachmentupload",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Easily upload attachment for Email and Notes",
   "scripts": {
     "build": "pcf-scripts build",
