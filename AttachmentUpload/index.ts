@@ -4,7 +4,7 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import { AttachmentUploader, UploadProps } from './AttachmentUploader';
 
 
- interface EntityRef {
+interface EntityRef {
 	id: string,
 	entityName: string
 }
@@ -16,6 +16,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 	private uploadProps: UploadProps = {
 		id: "",
 		entityName: "",
+		entitySetName: "",
 		controlToRefresh: "",
 		uploadIcon: "",
 		context: this._context
@@ -63,12 +64,17 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 	private getEntityReference(context: ComponentFramework.Context<IInputs>): EntityRef | undefined {
 		let currentPageContext = context as any;
 		currentPageContext = currentPageContext ? currentPageContext["page"] : undefined;
-		if (currentPageContext && currentPageContext.entityId && currentPageContext.entityId !== "") {
-			var entityRef: EntityRef = { id: currentPageContext.entityId, entityName: currentPageContext.entityTypeName };
-			return entityRef;
+		var entityRef: EntityRef = { id: "", entityName: "" };
+		if (currentPageContext) {
+			if (currentPageContext.entityTypeName) {
+				entityRef.entityName = currentPageContext.entityTypeName;
+			}
+			if (currentPageContext.entityId && currentPageContext.entityId !== "") {
+				entityRef.id = currentPageContext.entityId;
+			}
 		}
 
-		return undefined;
+		return entityRef;
 
 	}
 
@@ -80,13 +86,34 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 		this.uploadProps.context = context;
 
 		let entityRef = this.getEntityReference(context);
-		if (entityRef) {
+		if (entityRef && entityRef.id!=="") {
 			this.uploadProps.id = entityRef.id;
-			this.uploadProps.entityName = entityRef.entityName;
 		}
 		this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
 		this.uploadProps.uploadIcon = this.getImageBase64();//when initially a new record tha's transitioning to an existing record, so the UI is now being updated to enable the content
 
+		if (this.uploadProps.entitySetName === "") {
+			this.retrieveEntitySetNameAndRender(context, this.uploadProps.entityName);
+		}
+		else {
+			this.renderComponent();
+		}
+
+
+	}
+
+	private retrieveEntitySetNameAndRender(context: ComponentFramework.Context<IInputs>, entityName: string) {
+		var thisRef = this;
+		context.utils.getEntityMetadata(entityName).then(function (response) {
+			thisRef.uploadProps.entitySetName = response.EntitySetName;
+			thisRef.renderComponent();
+		},
+			function (errorResponse: any) {
+				console.log(`Error occurred while retrieving the entity metadata. ${errorResponse}`);
+			});
+	}
+
+	private renderComponent() {
 		ReactDOM.render(
 			React.createElement(
 				AttachmentUploader,
@@ -95,7 +122,6 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 			this.attachmentUploaderContainer
 		);
 	}
-
 	/** 
 	 * It is called by the framework prior to a control receiving new data. 
 	 * @returns an object based on nomenclature defined in manifest, expecting object[s] for property marked as “bound” or “output”

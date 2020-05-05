@@ -7,6 +7,7 @@ import { faSpinner, faRecordVinyl } from '@fortawesome/free-solid-svg-icons'
 export interface UploadProps {
     id: string;
     entityName:string;
+    entitySetName:string;
     controlToRefresh:string|null;
     uploadIcon:string;
     context: ComponentFramework.Context<IInputs>;
@@ -38,7 +39,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
             reader.onerror = error => reject(error);
         });
 
-        const uploadFileToRecord = async (id: string, entity: string,
+        const uploadFileToRecord = async (id: string, entity: string,entitySetName:string,
         fileInfo:  FileInfo,context: ComponentFramework.Context<IInputs>)=>{
 
             let isActivityMimeAttachment = (entity.toLowerCase() === "email" || entity.toLowerCase() === "appointment");
@@ -48,7 +49,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 attachmentRecord["body"] = fileInfo.body;
             }
             else {
-                attachmentRecord[`objectid_${entity}@odata.bind`] = `/${entity}s(${id})`;
+                attachmentRecord[`objectid_${entity}@odata.bind`] = `/${entitySetName}(${id})`;
                 attachmentRecord["documentbody"] = fileInfo.body;
             }
        
@@ -88,7 +89,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 entityName = currentPageContext.entityTypeName;
               }
 
-                await uploadFileToRecord(entityId,entityName,fileInfo,uploadProps.context);
+                await uploadFileToRecord(entityId,entityName,uploadProps.entitySetName, fileInfo,uploadProps.context);
             }
           }
           catch(e){         
