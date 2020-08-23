@@ -20,10 +20,12 @@ export interface FileInfo {
 }
 
 export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadProps) => {
-
+    
     const [uploadIcn,setuploadIcn]=React.useState(uploadProps.uploadIcon);
     const [totalFileCount, setTotalFileCount] = React.useState(0);
     const [currentUploadCount, setCurrentUploadCount] = React.useState(0);
+    const translate = (name:string) => uploadProps.context.resources.getString(name);
+
     const onDrop = React.useCallback((acceptedFiles:any) => {
        
         if(acceptedFiles && acceptedFiles.length){
@@ -93,7 +95,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
             }
           }
           catch(e){         
-            let errorMessagePrefix=(acceptedFiles.length===1)?"An error has occurred while trying to upload the attachment.":"One or more errors occured when trying to upload the attachments.";
+            let errorMessagePrefix=(acceptedFiles.length===1) ? translate("error_while_uploading_attachment") : translate("error_while_uploading_attachments");
             let errOptions={message:`${errorMessagePrefix} ${e.message}`};
             uploadProps.context.navigation.openErrorDialog(errOptions)
           }
@@ -122,7 +124,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
     if (uploadProps.id==null ||uploadProps.id === "") {
       return (
 <div className={"defaultContentCont"}>
-To enable the content create the record.
+{translate("save_record_to_enable_content")}
 </div>
       );
     }
@@ -136,14 +138,14 @@ To enable the content create the record.
                 <FontAwesomeIcon icon={faSpinner} inverse size="2x" spin/>
               </div>
               <div className={"uploadStatusText"}>
-                Uploading ({currentUploadCount}/{totalFileCount})
+              {translate("uploading")} ({currentUploadCount}/{totalFileCount})
              </div>
             </div>
           );
-        }
+        }      
       
 
-      
+
         return (
           <div className={"dragDropCont"}>
             <div className={"dropZoneCont uploadDivs"} {...getRootProps()} style={{ backgroundColor: isDragActive ? '#F8F8F8' : 'white' }}>
@@ -154,8 +156,8 @@ To enable the content create the record.
               <div>
                 {
                   isDragActive ?
-                    <p>Drop the files here ...</p> :
-                    <p>Drop files here or click to upload.</p>
+                    <p>{translate("drop_files_here")}</p> :
+                    <p>{translate("drop_files_here_or_click_to_upload")}</p>
                 }
               </div>
             </div>

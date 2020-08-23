@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="1.0.7" display-name-key="AttachmentUpload" 
+  <control namespace="vij" constructor="AttachmentUpload" version="1.0.8" display-name-key="AttachmentUpload" 
            description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
@@ -21,6 +21,10 @@
     <resources>
       <code path="index.ts" order="1"/>
       <css path="AttachmentUploader.css" order="2" />
+      <!-- English -->
+      <resx path="AttachmentUpload.1033.resx" version="1.0.0" />
+      <!-- Norwegian (Bokmal)	 -->
+      <resx path="AttachmentUpload.1044.resx" version="1.0.0" />
     </resources>
     <feature-usage>
       <uses-feature name="Utility" required="true" />
