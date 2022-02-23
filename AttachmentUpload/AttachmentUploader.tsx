@@ -78,7 +78,9 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 let file=acceptedFiles[i] as any;
                 let base64Data=await toBase64(acceptedFiles[i]);
                 let base64DataStr=base64Data as string;
-                var base64 =base64DataStr.replace(/^data:.+;base64,/, '');
+                let base64IndexOfBase64 = base64DataStr.indexOf(';base64,') + ';base64,'.length;
+                var base64 = base64DataStr.substring(base64IndexOfBase64);
+                //var base64 =base64DataStr.replace(/^data:.+;base64,/, '');
                 
                 let fileInfo:FileInfo ={name:file.name,type:file.type,body:base64};
               let entityId = uploadProps.id;
