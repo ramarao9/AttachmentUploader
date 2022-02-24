@@ -1,8 +1,8 @@
 import * as React from "react";
-import { IInputs, IOutputs } from "./generated/ManifestTypes"
+import { IInputs } from "./generated/ManifestTypes"
 import {useDropzone} from 'react-dropzone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faRecordVinyl } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 export interface UploadProps {
     id: string;
@@ -10,7 +10,7 @@ export interface UploadProps {
     entitySetName:string;
     controlToRefresh:string|null;
     uploadIcon:string;
-    context: ComponentFramework.Context<IInputs>;
+    context: ComponentFramework.Context<IInputs>|undefined;
 }
 
 export interface FileInfo {
@@ -24,7 +24,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
     const [uploadIcn,setuploadIcn]=React.useState(uploadProps.uploadIcon);
     const [totalFileCount, setTotalFileCount] = React.useState(0);
     const [currentUploadCount, setCurrentUploadCount] = React.useState(0);
-    const translate = (name:string) => uploadProps.context.resources.getString(name);
+    const translate = (name:string) => uploadProps.context?.resources.getString(name);
 
     const onDrop = React.useCallback((acceptedFiles:any) => {
        
@@ -91,13 +91,13 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 entityName = currentPageContext.entityTypeName;
               }
 
-                await uploadFileToRecord(entityId,entityName,uploadProps.entitySetName, fileInfo,uploadProps.context);
+                await uploadFileToRecord(entityId,entityName,uploadProps.entitySetName, fileInfo,uploadProps.context!!);
             }
           }
-          catch(e){         
+          catch(e: any){         
             let errorMessagePrefix=(acceptedFiles.length===1) ? translate("error_while_uploading_attachment") : translate("error_while_uploading_attachments");
             let errOptions={message:`${errorMessagePrefix} ${e.message}`};
-            uploadProps.context.navigation.openErrorDialog(errOptions)
+            uploadProps.context?.navigation.openErrorDialog(errOptions)
           }
 
             setTotalFileCount(0);
@@ -134,8 +134,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
           fileStats = (          
             <div className={"filesStatsCont uploadDivs"}>
               <div>
-                {/* <img src={spinner} alt="processing" /> */}
-                <FontAwesomeIcon icon={faSpinner} inverse size="2x" spin/>
+                <FontAwesomeIcon icon={"spinner"} inverse size="2x" spin/>
               </div>
               <div className={"uploadStatusText"}>
               {translate("uploading")} ({currentUploadCount}/{totalFileCount})

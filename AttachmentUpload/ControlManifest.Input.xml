@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="1.0.8" display-name-key="AttachmentUpload" 
+  <control namespace="vij" constructor="AttachmentUpload" version="1.0.9" display-name-key="AttachmentUpload" 
            description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
@@ -14,10 +14,13 @@
       <type>Decimal</type>
     </type-group>
     <property name="Attribute" display-name-key="Attribute" description-key="Select an Attribute" of-type-group="flds" 
-              usage="bound" required="true" />
+              usage="bound" />
 		
- <property name="ControlNameForRefresh" display-name-key="ControlNameForRefresh" description-key="ControlNameForRefresh"  
-              usage="input" required="true" of-type="SingleLine.Text"/>
+    <property name="ControlNameForRefresh" display-name-key="ControlNameForRefresh" description-key="ControlNameForRefresh"  
+              usage="input"  of-type="SingleLine.Text"/>
+
+
+    <property name="recordId" display-name-key="Record Id" description-key="Unique identifier for the record" of-type="SingleLine.Text" usage="input" />
     <resources>
       <code path="index.ts" order="1"/>
       <css path="AttachmentUploader.css" order="2" />
