@@ -24,6 +24,8 @@
     <resources>
       <code path="index.ts" order="1"/>
       <css path="AttachmentUploader.css" order="2" />
+      <!-- Danish -->
+      <resx path="AttachmentUpload.1030.resx" version="1.0.0" />
       <!-- English -->
       <resx path="AttachmentUpload.1033.resx" version="1.0.0" />
       <!-- Norwegian (Bokmal)	 -->
