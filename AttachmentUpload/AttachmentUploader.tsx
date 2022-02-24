@@ -70,8 +70,6 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
 
          
           try{
-
-          
             for(let i=0;i<acceptedFiles.length;i++)
             {
                 setCurrentUploadCount(i);
@@ -80,8 +78,6 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
                 let base64DataStr=base64Data as string;
                 let base64IndexOfBase64 = base64DataStr.indexOf(';base64,') + ';base64,'.length;
                 var base64 = base64DataStr.substring(base64IndexOfBase64);
-                //var base64 =base64DataStr.replace(/^data:.+;base64,/, '');
-                
                 let fileInfo:FileInfo ={name:file.name,type:file.type,body:base64};
               let entityId = uploadProps.id;
               let entityName = uploadProps.entityName;
