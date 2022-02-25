@@ -132,7 +132,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
           fileStats = (          
             <div className={"filesStatsCont uploadDivs"}>
               <div>
-                <FontAwesomeIcon icon={"spinner"} inverse size="2x" spin/>
+                <FontAwesomeIcon icon={faSpinner} inverse size="2x" spin />
               </div>
               <div className={"uploadStatusText"}>
               {translate("uploading")} ({currentUploadCount}/{totalFileCount})
@@ -161,6 +161,8 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
       
             { fileStats }
       
+        
+
           </div>
         )
       
