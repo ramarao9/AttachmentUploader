@@ -12,3 +12,5 @@
 # msbuild output directories
 /bin
 /obj
+.DS_Store
+~/Library/Microsoft/PowerAppsCli/usersettings.json

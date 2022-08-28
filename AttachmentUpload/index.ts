@@ -19,6 +19,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 		entitySetName: "",
 		controlToRefresh: "",
 		uploadIcon: "",
+		useNoteAttachment: false,
 		context: undefined
 	};
 	constructor() {
@@ -41,7 +42,8 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 			this.uploadProps.context = context;
 			this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
 			this.uploadProps.uploadIcon = this.getImageBase64();
-			this.uploadProps.context=context;
+			this.uploadProps.useNoteAttachment = context.parameters.UseNoteAttachment.raw === "1";
+			this.uploadProps.context = context;
 		}
 		this.attachmentUploaderContainer = container;
 	}
@@ -77,7 +79,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 		this.uploadProps.context = context;
 
 		let entityRef = this.getEntityReference(context);
-		if (entityRef && entityRef.id!=="") {
+		if (entityRef && entityRef.id !== "") {
 			this.uploadProps.id = entityRef.id;
 		}
 		this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="1.0.12" display-name-key="AttachmentUpload" 
+  <control namespace="vij" constructor="AttachmentUpload" version="1.1.1" display-name-key="AttachmentUpload" 
            description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
@@ -18,6 +18,14 @@
 		
     <property name="ControlNameForRefresh" display-name-key="ControlNameForRefresh" description-key="ControlNameForRefresh"  
               usage="input"  of-type="SingleLine.Text"/>
+
+    <property name="UseNoteAttachment" display-name-key="UseNoteAttachment" description-key="Upload as attachment on the Notes entity when Email or Appointment instead of Attachment(ActivityMimeAttachment)"  
+              usage="input" of-type="Enum">
+         <value name="No" display-name-key="No" default="true">0</value>
+         <value name="Yes" display-name-key="Yes">1</value>
+    </property>
+
+
 
     <resources>
       <code path="index.ts" order="1"/>
