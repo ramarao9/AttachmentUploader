@@ -120,7 +120,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
 
 
 
-  }, [totalFileCount, currentUploadCount])
+  }, [totalFileCount, currentUploadCount, uploadProps.defaultNoteTitle])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop })
 
