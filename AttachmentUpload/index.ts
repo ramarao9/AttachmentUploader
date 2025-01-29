@@ -20,7 +20,8 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 		controlToRefresh: "",
 		uploadIcon: "",
 		useNoteAttachment: false,
-		context: undefined
+		context: undefined,
+		defaultNoteTitle: ""
 	};
 	constructor() {
 
@@ -43,6 +44,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 			this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
 			this.uploadProps.uploadIcon = this.getImageBase64();
 			this.uploadProps.useNoteAttachment = context.parameters.UseNoteAttachment.raw === "1";
+			this.uploadProps.defaultNoteTitle = context.parameters.DefaultNoteTitle.raw;
 			this.uploadProps.context = context;
 		}
 		this.attachmentUploaderContainer = container;
