@@ -87,6 +87,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
 		this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
 		this.uploadProps.uploadIcon = this.getImageBase64();//when initially a new record tha's transitioning to an existing record, so the UI is now being updated to enable the content
 
+		this.uploadProps.defaultNoteTitle = context.parameters.DefaultNoteTitle.raw;
 		if (this.uploadProps.entitySetName === "") {
 			this.retrieveEntitySetNameAndRender(context, this.uploadProps.entityName);
 		}
