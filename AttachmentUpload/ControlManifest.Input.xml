@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="1.1.1" display-name-key="AttachmentUpload" 
-           description-key="Upload attachments easily using drag and drop" control-type="standard">
+  <control namespace="vij" constructor="AttachmentUpload" version="1.1.3"
+    display-name-key="AttachmentUpload"
+    description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
       <type>SingleLine.Phone</type>
@@ -13,22 +14,28 @@
       <type>FP</type>
       <type>Decimal</type>
     </type-group>
-    <property name="Attribute" display-name-key="Attribute" description-key="Select an Attribute" of-type-group="flds" 
-              usage="bound" />
-		
-    <property name="ControlNameForRefresh" display-name-key="ControlNameForRefresh" description-key="ControlNameForRefresh"  
-              usage="input"  of-type="SingleLine.Text"/>
+    <property name="Attribute" display-name-key="Attribute" description-key="Select an Attribute"
+      of-type-group="flds"
+      usage="bound" />
 
-    <property name="UseNoteAttachment" display-name-key="UseNoteAttachment" description-key="Upload as attachment on the Notes entity when Email or Appointment instead of Attachment(ActivityMimeAttachment)"  
-              usage="input" of-type="Enum">
-         <value name="No" display-name-key="No" default="true">0</value>
-         <value name="Yes" display-name-key="Yes">1</value>
+    <property name="ControlNameForRefresh" display-name-key="ControlNameForRefresh"
+      description-key="ControlNameForRefresh"
+      usage="input" of-type="SingleLine.Text" />
+
+    <property name="DefaultNoteTitle" display-name-key="DefaultNoteTitle"
+      description-key="Sets the default title for the Note attachment"
+      usage="input" of-type="SingleLine.Text" />
+
+    <property name="UseNoteAttachment" display-name-key="UseNoteAttachment"
+      description-key="Upload as attachment on the Notes entity when Email or Appointment instead of Attachment(ActivityMimeAttachment)"
+      usage="input" of-type="Enum">
+      <value name="No" display-name-key="No" default="true">0</value>
+      <value name="Yes" display-name-key="Yes">1</value>
     </property>
 
 
-
     <resources>
-      <code path="index.ts" order="1"/>
+      <code path="index.ts" order="1" />
       <css path="AttachmentUploader.css" order="2" />
       <!-- Danish -->
       <resx path="AttachmentUpload.1030.resx" version="1.0.0" />

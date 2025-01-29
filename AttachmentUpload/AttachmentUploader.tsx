@@ -13,6 +13,7 @@ export interface UploadProps {
   uploadIcon: string;
   useNoteAttachment: boolean;
   context: ComponentFramework.Context<IInputs> | undefined;
+  defaultNoteTitle: string | null;
 }
 
 export interface FileInfo {
@@ -44,7 +45,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
     });
 
     const uploadFileToRecord = async (id: string, entity: string, entitySetName: string,
-      fileInfo: FileInfo, context: ComponentFramework.Context<IInputs>) => {
+      fileInfo: FileInfo, context: ComponentFramework.Context<IInputs>, defaultNoteTitle: string|null) => {
 
       let isActivityMimeAttachment = !uploadProps.useNoteAttachment && (entity.toLowerCase() === "email" || entity.toLowerCase() === "appointment");
       let attachmentRecord: ComponentFramework.WebApi.Entity = {};
@@ -55,6 +56,10 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
       else {
         attachmentRecord[`objectid_${entity}@odata.bind`] = `/${entitySetName}(${id})`;
         attachmentRecord["documentbody"] = fileInfo.body;
+
+        if (defaultNoteTitle != null && defaultNoteTitle !== "") {
+          attachmentRecord["subject"] = defaultNoteTitle;
+        }
       }
 
       if (fileInfo.type && fileInfo.type !== "") {
@@ -90,7 +95,7 @@ export const AttachmentUploader: React.FC<UploadProps> = (uploadProps: UploadPro
             entityName = currentPageContext.entityTypeName;
           }
 
-          await uploadFileToRecord(entityId, entityName, uploadProps.entitySetName, fileInfo, uploadProps.context!!);
+          await uploadFileToRecord(entityId, entityName, uploadProps.entitySetName, fileInfo, uploadProps.context!!, uploadProps.defaultNoteTitle);
         }
       }
       catch (e: any) {
