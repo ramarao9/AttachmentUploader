@@ -81,6 +81,9 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
             theme,
             // Defaults to shown, so an unset property behaves like it did before this was added.
             showSuccessMessage: context.parameters.ShowSuccessMessage.raw !== "0",
+            // Unset in a model driven app, where the control tracks its own upload instead.
+            externallyBusy: context.parameters.IsProcessing.raw === true,
+            externalBusyFileName: context.parameters.ProcessingFileName.raw ?? "",
             translate: this.translate,
             initializationError: this.initializationError,
             onFiles: this.handleFiles

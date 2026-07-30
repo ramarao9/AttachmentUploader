@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="1.2.4" display-name-key="AttachmentUpload" description-key="Upload attachments easily using drag and drop" control-type="standard">
+  <control namespace="vij" constructor="AttachmentUpload" version="1.2.5" display-name-key="AttachmentUpload" description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
       <type>SingleLine.Phone</type>
@@ -39,6 +39,14 @@
     <property name="MaxFileSizeKB" display-name-key="MaxFileSizeKB" description-key="Largest accepted file size in KB. Leave empty or 0 for no limit." usage="input" of-type="Whole.None" />
 
     <property name="AcceptedFileTypes" display-name-key="AcceptedFileTypes" description-key="Comma separated list of accepted file extensions or mime types, for example .pdf,.docx,image/*. Leave empty to accept everything." usage="input" of-type="SingleLine.Text" />
+
+    <!-- Canvas apps drive the upload themselves, so the control cannot know when they are working.
+         These two let the app put the drop zone into the same busy state a model driven upload shows.
+         Note that Power Apps does not repaint mid formula: setting these inside a ForAll shows nothing
+         until the formula finishes, so the app has to drive them from a Timer, one file per tick. -->
+    <property name="IsProcessing" display-name-key="IsProcessing" description-key="Set to true while the app is uploading. Shows the spinner and blocks further drops, the same as during a model driven upload. Canvas apps only." usage="input" of-type="TwoOptions" />
+
+    <property name="ProcessingFileName" display-name-key="ProcessingFileName" description-key="Name of the file currently being uploaded, shown next to the spinner while IsProcessing is true. Canvas apps only." usage="input" of-type="SingleLine.Text" />
 
     <property name="SelectedFiles" display-name-key="SelectedFiles" description-key="JSON array of the files picked in the last batch. Each entry has name, type, size and content (base64). Canvas apps only." usage="output" of-type="Multiple" />
 

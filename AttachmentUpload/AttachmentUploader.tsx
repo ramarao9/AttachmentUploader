@@ -37,6 +37,14 @@ export interface AttachmentUploaderProps {
     theme: Theme;
     /** Canvas only: whether to show the "N file(s) uploaded." confirmation after a batch. */
     showSuccessMessage: boolean;
+    /**
+     * Canvas only: the app reports that it is uploading. The control has no visibility into a Power Fx
+     * upload, so this is the only way for the drop zone to show the busy state a model driven upload
+     * shows on its own. Merged with, rather than replacing, the control's own busy state.
+     */
+    externallyBusy: boolean;
+    /** Canvas only: file the app is currently uploading, shown beside the spinner. */
+    externalBusyFileName: string;
     translate: Translate;
     /** Set when the control could not initialize, for example when entity metadata failed to load. */
     initializationError?: string | null;
@@ -107,7 +115,19 @@ const useStyles = makeStyles({
 });
 
 export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement => {
-    const { mode, canUpload, maxFileSizeKb, acceptAttribute, theme, showSuccessMessage, translate, initializationError, onFiles } = props;
+    const {
+        mode,
+        canUpload,
+        maxFileSizeKb,
+        acceptAttribute,
+        theme,
+        showSuccessMessage,
+        externallyBusy,
+        externalBusyFileName,
+        translate,
+        initializationError,
+        onFiles
+    } = props;
     const styles = useStyles();
 
     const [busy, setBusy] = useState(false);
@@ -118,6 +138,10 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
 
     const maxBytes = useMemo(() => (maxFileSizeKb > 0 ? maxFileSizeKb * 1024 : 0), [maxFileSizeKb]);
     const acceptTokens = useMemo(() => parseAcceptTokens(acceptAttribute), [acceptAttribute]);
+
+    // Reading the files and the app uploading them are two separate phases of the same operation in
+    // canvas, so either one puts the drop zone into the busy state.
+    const isBusy = busy || externallyBusy;
 
     const onDrop = useCallback(
         async (droppedFiles: File[]) => {
@@ -193,18 +217,24 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
     // onDrop already handles its own errors in the try/catch above.
     const handleDrop = useCallback((droppedFiles: File[]) => void onDrop(droppedFiles), [onDrop]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop: handleDrop, disabled: !canUpload || busy });
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop: handleDrop, disabled: !canUpload || isBusy });
 
     const dropZoneClassName = [
         styles.dropZone,
         isDragActive ? styles.dropZoneActive : "",
         canUpload ? "" : styles.dropZoneDisabled,
-        busy ? styles.dropZoneBusy : ""
+        isBusy ? styles.dropZoneBusy : ""
     ]
         .filter(Boolean)
         .join(" ");
 
     const message = initializationError ?? (canUpload ? null : translate("save_record_to_enable_content"));
+
+    // The control's own phase wins while it is reading files, because only it knows those counts.
+    // Once it has handed them over, the app is the only thing that knows what is happening.
+    const busyLabel = busy
+        ? `${translate("uploading")} (${completed}/${total})`
+        : [translate("uploading"), externalBusyFileName].filter(Boolean).join(" ");
 
     return (
         <FluentProvider theme={theme} className={styles.root}>
@@ -217,12 +247,8 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
             <div {...getRootProps({ className: dropZoneClassName })}>
                 <input {...getInputProps({ accept: acceptAttribute || undefined })} />
 
-                {busy ? (
-                    <Spinner
-                        size="large"
-                        labelPosition="below"
-                        label={`${translate("uploading")} (${completed}/${total})`}
-                    />
+                {isBusy ? (
+                    <Spinner size="large" labelPosition="below" label={busyLabel} />
                 ) : (
                     <>
                         <CloudArrowUp48Regular className={styles.icon} />
@@ -252,7 +278,9 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
                 </MessageBar>
             )}
 
-            {mode === "canvas" && showSuccessMessage && successCount > 0 && failures.length === 0 && (
+            {/* successCount only means "handed to the app" in canvas, so holding the confirmation back
+                until the app stops uploading keeps it from claiming success mid upload. */}
+            {mode === "canvas" && showSuccessMessage && !externallyBusy && successCount > 0 && failures.length === 0 && (
                 <MessageBar intent="success">
                     <MessageBarBody>{`${successCount} ${translate("files_uploaded")}`}</MessageBarBody>
                 </MessageBar>
