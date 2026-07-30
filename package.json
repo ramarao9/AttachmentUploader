@@ -1,35 +1,42 @@
 {
   "name": "attachmentupload",
-  "version": "1.0.3",
+  "version": "1.2.1",
   "description": "Easily upload attachment for Email and Notes",
   "scripts": {
     "build": "pcf-scripts build",
     "clean": "pcf-scripts clean",
+    "lint": "pcf-scripts lint",
+    "lint:fix": "pcf-scripts lint fix",
     "rebuild": "pcf-scripts rebuild",
-    "start": "pcf-scripts start"
+    "start": "pcf-scripts start",
+    "start:watch": "pcf-scripts start watch",
+    "refreshTypes": "pcf-scripts refreshTypes"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.3.0",
-    "@fortawesome/free-solid-svg-icons": "^6.0.0",
-    "@fortawesome/react-fontawesome": "^0.1.17",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-dropzone": "^12.1.0"
+    "@fluentui/react-components": "^9.54.16",
+    "@fluentui/react-icons": "^2.0.245",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3"
   },
   "devDependencies": {
-    "@microsoft/eslint-plugin-power-apps": "^0.2.6",
-    "@types/node": "^18.8.2",
-    "@types/powerapps-component-framework": "^1.3.4",
-    "@types/react": "^16.14.5",
-    "@types/react-dom": "^16.9.12",
-    "@typescript-eslint/eslint-plugin": "^5.39.0",
-    "@typescript-eslint/parser": "^5.39.0",
-    "eslint": "^8.24.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.0.1",
+    "@eslint/js": "^9.25.1",
+    "@microsoft/eslint-plugin-power-apps": "^0.2.51",
+    "@types/node": "^18.19.86",
+    "@types/powerapps-component-framework": "^1.3.16",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-promise": "^7.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "globals": "^15.15.0",
     "pcf-scripts": "^1",
     "pcf-start": "^1",
-    "typescript": "^4.9.5"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "8.44.0",
+    "uuid": "^11.1.1"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.8"
   }
 }

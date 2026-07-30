@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="vij" constructor="AttachmentUpload" version="1.1.7" display-name-key="AttachmentUpload" description-key="Upload attachments easily using drag and drop" control-type="standard">
+  <control namespace="vij" constructor="AttachmentUpload" version="1.2.4" display-name-key="AttachmentUpload" description-key="Upload attachments easily using drag and drop" control-type="standard">
     <type-group name="flds">
       <type>SingleLine.Text</type>
       <type>SingleLine.Phone</type>
@@ -12,29 +12,42 @@
       <type>FP</type>
       <type>Decimal</type>
     </type-group>
-    <type-group name="txtFields">
-      <type>SingleLine.Text</type>
-      <type>SingleLine.Phone</type>
-      <type>SingleLine.Email</type>
-      <type>SingleLine.Ticker</type>
-      <type>SingleLine.TextArea</type>
-      <type>Multiple</type>
-    </type-group>
     <property name="Attribute" display-name-key="Attribute" description-key="Select an Attribute" of-type-group="flds" usage="bound" />
 
     <property name="ControlNameForRefresh" display-name-key="ControlNameForRefresh" description-key="ControlNameForRefresh" usage="input" of-type="SingleLine.Text" />
 
-    <property name="DefaultNoteTitle" display-name-key="DefaultNoteTitle" description-key="Sets the default title for the Note attachment" usage="input" of-type-group="txtFields" />
+    <!-- Deliberately a concrete of-type rather than a type-group: of-type-group is model driven only,
+         so a type-group here leaves the property unusable in canvas apps. -->
+    <property name="DefaultNoteTitle" display-name-key="DefaultNoteTitle" description-key="Sets the default title for the Note attachment" usage="input" of-type="SingleLine.Text" />
 
     <property name="UseNoteAttachment" display-name-key="UseNoteAttachment" description-key="Upload as attachment on the Notes entity when Email or Appointment instead of Attachment(ActivityMimeAttachment)" usage="input" of-type="Enum">
       <value name="No" display-name-key="No" default="true">0</value>
       <value name="Yes" display-name-key="Yes">1</value>
     </property>
 
+    <property name="HostMode" display-name-key="HostMode" description-key="Auto detects the host. In a model driven app the control uploads to Dataverse itself; in a canvas app it returns the files through the SelectedFiles output instead." usage="input" of-type="Enum">
+      <value name="Auto" display-name-key="Auto" default="true">0</value>
+      <value name="ModelDriven" display-name-key="ModelDriven">1</value>
+      <value name="Canvas" display-name-key="Canvas">2</value>
+    </property>
+
+    <property name="ShowSuccessMessage" display-name-key="ShowSuccessMessage" description-key="Show the confirmation message listing how many files were uploaded. Canvas apps only." usage="input" of-type="Enum">
+      <value name="Yes" display-name-key="Yes" default="true">1</value>
+      <value name="No" display-name-key="No">0</value>
+    </property>
+
+    <property name="MaxFileSizeKB" display-name-key="MaxFileSizeKB" description-key="Largest accepted file size in KB. Leave empty or 0 for no limit." usage="input" of-type="Whole.None" />
+
+    <property name="AcceptedFileTypes" display-name-key="AcceptedFileTypes" description-key="Comma separated list of accepted file extensions or mime types, for example .pdf,.docx,image/*. Leave empty to accept everything." usage="input" of-type="SingleLine.Text" />
+
+    <property name="SelectedFiles" display-name-key="SelectedFiles" description-key="JSON array of the files picked in the last batch. Each entry has name, type, size and content (base64). Canvas apps only." usage="output" of-type="Multiple" />
+
+    <property name="SelectedFilesCount" display-name-key="SelectedFilesCount" description-key="Number of files in the last batch returned through SelectedFiles. Canvas apps only." usage="output" of-type="Whole.None" />
+
+    <property name="LastBatchId" display-name-key="LastBatchId" description-key="Increments on every batch, so OnChange still fires when the same files are picked twice in a row. Canvas apps only." usage="output" of-type="Whole.None" />
 
     <resources>
       <code path="index.ts" order="1" />
-      <css path="AttachmentUploader.css" order="2" />
       <!-- Danish -->
       <resx path="AttachmentUpload.1030.resx" version="1.0.0" />
       <!-- English -->
@@ -43,8 +56,8 @@
       <resx path="AttachmentUpload.1044.resx" version="1.0.0" />
     </resources>
     <feature-usage>
-      <uses-feature name="Utility" required="true" />
-      <uses-feature name="WebAPI" required="true" />
+      <uses-feature name="Utility" required="false" />
+      <uses-feature name="WebAPI" required="false" />
     </feature-usage>
   </control>
 </manifest>

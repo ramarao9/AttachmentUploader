@@ -135,4 +135,13 @@
   <data name="error_while_uploading_attachment" xml:space="preserve">
     <value>Der skete en fejl ved upload af den vedhæftede fil.</value>
   </data>
+  <data name="file_too_large" xml:space="preserve">
+    <value>er større end den tilladte størrelse.</value>
+  </data>
+  <data name="file_type_not_allowed" xml:space="preserve">
+    <value>er ikke en tilladt filtype.</value>
+  </data>
+  <data name="files_uploaded" xml:space="preserve">
+    <value>fil(er) uploadet.</value>
+  </data>
 </root>

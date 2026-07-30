@@ -80,4 +80,13 @@
     <data name="drop_files_here_or_click_to_upload" xml:space="preserve">
         <value>Drop files here or click to upload.</value>
     </data>
+    <data name="file_too_large" xml:space="preserve">
+        <value>is larger than the allowed size.</value>
+    </data>
+    <data name="file_type_not_allowed" xml:space="preserve">
+        <value>is not an accepted file type.</value>
+    </data>
+    <data name="files_uploaded" xml:space="preserve">
+        <value>file(s) uploaded.</value>
+    </data>
 </root>

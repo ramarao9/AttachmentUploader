@@ -1,136 +1,194 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import { createElement } from "react";
+import { createRoot, Root } from "react-dom/client";
+import { webLightTheme, type Theme } from "@fluentui/react-components";
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { AttachmentUploader, UploadProps } from './AttachmentUploader';
-
-
-interface EntityRef {
-	id: string,
-	entityName: string
-}
+import { AttachmentUploader, AttachmentUploaderProps, ProgressCallback } from "./AttachmentUploader";
+import { FileInfo, UploadResult, toErrorMessage, uploadToDataverse } from "./attachmentService";
+import { EntityRef, HostMode, getEntityReference, getEntitySetName, isApiUnavailable, refreshFormControl, resolveHostMode } from "./hostContext";
+import { Translate, makeTranslator } from "./strings";
 
 export class AttachmentUpload implements ComponentFramework.StandardControl<IInputs, IOutputs> {
-	private UploadIconName: string = "uploadicn.png";
-	private attachmentUploaderContainer: HTMLDivElement;
-	private _context: ComponentFramework.Context<IInputs>;
-	private uploadProps: UploadProps = {
-		id: "",
-		entityName: "",
-		entitySetName: "",
-		controlToRefresh: "",
-		uploadIcon: "",
-		useNoteAttachment: false,
-		context: undefined,
-		defaultNoteTitle: ""
-	};
-	constructor() {
+    private container: HTMLDivElement;
+    private root: Root;
+    private context: ComponentFramework.Context<IInputs>;
+    private notifyOutputChanged: () => void;
+    private translate: Translate;
 
-	}
+    /** Cached entity set name lookup, keyed by the entity it was started for. */
+    private entitySetNameFor = "";
+    private entitySetNamePromise: Promise<string> | undefined;
+    private initializationError: string | null = null;
 
-	/**
-	 * Used to initialize the control instance. Controls can kick off remote server calls and other initialization actions here.
-	 * Data-set values are not initialized here, use updateView.
-	 * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to property names defined in the manifest, as well as utility functions.
-	 * @param notifyOutputChanged A callback method to alert the framework that the control has new outputs ready to be retrieved asynchronously.
-	 * @param state A piece of data that persists in one session for a single user. Can be set at any point in a controls life cycle by calling 'setControlState' in the Mode interface.
-	 * @param container If a control is marked control-type='standard', it will receive an empty div element within which it can render its content.
-	 */
-	public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement) {
-		let entityRef = this.getEntityReference(context);
-		if (entityRef) {
-			this.uploadProps.id = entityRef.id
-			this.uploadProps.entityName = entityRef.entityName;
-			this.uploadProps.context = context;
-			this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
-			this.uploadProps.uploadIcon = this.getImageBase64();
-			this.uploadProps.useNoteAttachment = context.parameters.UseNoteAttachment.raw === "1";
-			this.uploadProps.defaultNoteTitle = context.parameters.DefaultNoteTitle.raw;
-			this.uploadProps.context = context;
-		}
-		this.attachmentUploaderContainer = container;
-	}
+    /** Set to "canvas" when the host turned out to have no Dataverse APIs after all. */
+    private hostModeOverride: HostMode | undefined;
 
-	//since we want the image to also render during dev, we can use this approach until better support is provided in the future.
-	private getImageBase64() {
-		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAAG30lEQVR4nO2ce4gVVRzHP6tmavm2UvOVlYIroRlhWZFhf6hRCT1UKksLC4KwAsEempQIQVL0NFDqD4sUISL6w6ysTDMkSVF7qdiu1lZmGZuru3f747e3Zs6ZuTt35s6cM/eeDwzcO48z35nvnOfvzIDD4XA4HA6Hw+FwOGqaOtMCKkxfYDJwJTAeGAQMAAYC3YATwHHgEPAd8A3wMfCzAa1Vy0DgIWAn0Aa0x1j2AMuAC7OVXl1cArwNnCSeCUFLAdgEXJvdZeSf84DVQCuVMyJo+QQxPVPyVofcCzwH9A7ZXgB2A58CO4BG4Dfgd+B0x3EDgTFAPXANcDlwRkh6rcDzwGNAS0WuoEroBbxB+NO8C1gI9I+Rdm9gHvBRifR3AhcluoIqYjhS6QbdqE1Ii6pSXApsDDnXH0iOqmmGAT+g35wG4PYUzzsN+DbgvP8AN6V4Xqs5H/ge/aZsJLwOqSRnAWsDzt8CXJ/B+a2iJ1IvqE3Sp8m+IfIgev/mL2BixjqM8jq6GQsM6pmN3sz+EehnUFNm3IVeTCwxqkhYgDwYXl3rK32StLP/WGAS0pk7F2gGjgJfIv0FlUFIveF98l4FHkhXZmRWAouVdTcD7xrQEplzgBXI4F2pnnAjsBwxq8hLyj57gDOzEh6BbsDn+DUeQvpJ1tEdWIpUeOUMUTQDjwMTkN50cX0r0ou2jTHo42eLjCoKYDD6k1Puclr5vyrTKyiPFei5vUclEq5EHTISMWNYwLZm4EOkRdKEZO0RyGjqyBJpngQuwN44RX+kqOrjWTcPeNOIGg99kcpZfdoPIq2lniWOvQx4L+DYdqTZazsr0YdxjLOe4JtZTkV8I/565xTSOrOdi/E3g9uAISYFXYduxrKYaY0DNgP7kJyVF7bjv/47TYr5WhGzjvzFV5KyFP89WGtKyERFyHEk8FNrXI3/Puw1JeRZRchTpoQYpjf+eqQF6Txmzlf4DRlnQoQlNOC/F4lmrnSJedwYz+9GDGZVC2hQ/g9KklgcQybh7xD9lERAFXBC+Z8oeFaOIVORjtwOZX1TEgFVgDobpXuSxKJUQEOBF4FZIdsPJhFQBfRV/ndN82RzkSZt2IDgZiTOUcsEzYj5BXgfiZ1UpPdeBzyJHiFrRwb8luOv2GuZfZQexT4FbACmJDmJGihqR6bArCCbGR95YjHRwgsFYA0xOtCPBiR2AAkgOYKZjISZlyGDq+qwkndpooxpRDPRp7xsozaHRZIyCngEKeJVU1qAOZ0l0Ae917kXZ0ZSzkZyjhr2bUMmj4fygnLAn4jLeWB2x2IzU9BzSwtS3GkMR49pL8xEZnLuRiZEtHb8tpkRSOjXe58PIzN1fDyj7LSDfMQ25uOv89o61tnMBOBv/Pf7Ne8O3ZGa37tDmjPLK4VqRp5MuQO9rzK6uHGKsrERQ2P6ZRBmRl5MqUNmbwZGG5eEbbCUzszIiylT0TvefQA+UDYYDdR3QlQz8mLKAQKqCnVeVeZvnkYkyIywOiQvpqzCr/VlkNno3pVG5xaFEGbGfHRDSu1rGzPw69wKUsN7VyYKsKRAZzdYNSTKMbYwHr/GoyDzb70rS03/zJp70G9sAbjfs0+QIVGPNc0A/PqaAY4oK4ebUqcwl2hPeZghEJ5T5qamujx6ovdH2KqsnGZKnYc65AsMUYqcUoZAsCm/YsdIxGj8uo51QSJeXq7IWlUI3ptbAO5DAjzlsqbj2EJI2iYZqvw/AvJeg9elLzIWFcYs5EluonTsoLMcUmSOJ72wCRtZ8zB+7RtAXtD3ZukC+YqXRzXERrbg1/7fq3GblQ3rTKiLSV4NGYL+7nt9ceNtyoY25EMseSCvhryCX/cu78auwH5lh23Y9UpyGHk0ZCwRAoI3oF/c2uw0xiZvhvRCvr/l1XyYkIc/6J3BJzKRGZ88GVKHfCdS1Xxr2AH90IeEiznF1uIrL4b0ItiMTr+XUg8cCzhwO/Iqgm3kwZCx6MVUO1Jvq5O1A5lMsCkF4C3sem3ZZkOGIK0ptQJvR96rGVVOYvUEF1/eVthSZOxrBPIFNhPYYkgPZGzqKqQHvoXwT9nuJ+act37AOyGJprUcAKaXoTGuITMo/cCltWwgYjFVipnItNKsRKvv7ZUiriHqtNm0l8OUaE3FoQtwC/JNj7jfWK9FQ4rfFE61lToYmZ2yGvgMCT2eqNAFZFVkTaeyRVYr0hDajRRLi/CMTUXFhiBNUlQTcn1Ncd9Td6SEM8QynCGW4QyxDGeIZThDLMMZYhnOEMtwhliGM8QynCGW4QyxDGeIZVSDIYc8vw+aEuH4n+lIsKmB8uIoDofD4XA4HA6Hw+FwOBwOhyMB/wKTQDhUkZUrHgAAAABJRU5ErkJggg==";
-	}
+    /** Canvas app outputs. */
+    private selectedFiles = "";
+    private selectedFilesCount = 0;
+    private lastBatchId = 0;
 
+    public init(
+        context: ComponentFramework.Context<IInputs>,
+        notifyOutputChanged: () => void,
+        state: ComponentFramework.Dictionary,
+        container: HTMLDivElement
+    ): void {
+        this.context = context;
+        this.notifyOutputChanged = notifyOutputChanged;
+        this.translate = makeTranslator(context);
+        this.container = container;
+        this.container.style.height = "100%";
+        this.root = createRoot(container);
+        context.mode.trackContainerResize(true);
+    }
 
-	private getEntityReference(context: ComponentFramework.Context<IInputs>): EntityRef | undefined {
-		let currentPageContext = context as any;
-		currentPageContext = currentPageContext ? currentPageContext["page"] : undefined;
-		var entityRef: EntityRef = { id: "", entityName: "" };
-		if (currentPageContext) {
-			if (currentPageContext.entityTypeName) {
-				entityRef.entityName = currentPageContext.entityTypeName;
-			}
-			if (currentPageContext.entityId && currentPageContext.entityId !== "") {
-				entityRef.id = currentPageContext.entityId;
-			}
-		}
+    public updateView(context: ComponentFramework.Context<IInputs>): void {
+        this.context = context;
 
-		return entityRef;
+        const mode = this.resolveMode(context);
+        const entityRef = getEntityReference(context);
 
-	}
+        if (mode === "modeldriven") {
+            // Prefetch; failures are reported through initializationError and re-raised at upload time.
+            void this.ensureEntitySetName(entityRef.entityName).catch(() => undefined);
+        }
 
-	/**
-	 * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
-	 * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
-	 */
-	public updateView(context: ComponentFramework.Context<IInputs>): void {
-		this.uploadProps.context = context;
+        this.applyAllocatedSize(context);
+        this.render(context, mode, entityRef);
+    }
 
-		let entityRef = this.getEntityReference(context);
-		if (entityRef && entityRef.id !== "") {
-			this.uploadProps.id = entityRef.id;
-		}
-		this.uploadProps.controlToRefresh = context.parameters.ControlNameForRefresh.raw;
-		this.uploadProps.uploadIcon = this.getImageBase64();//when initially a new record tha's transitioning to an existing record, so the UI is now being updated to enable the content
+    public getOutputs(): IOutputs {
+        return {
+            SelectedFiles: this.selectedFiles,
+            SelectedFilesCount: this.selectedFilesCount,
+            LastBatchId: this.lastBatchId
+        };
+    }
 
-		this.uploadProps.defaultNoteTitle = context.parameters.DefaultNoteTitle.raw;
-		if (this.uploadProps.entitySetName === "") {
-			this.retrieveEntitySetNameAndRender(context, this.uploadProps.entityName);
-		}
-		else {
-			this.renderComponent();
-		}
+    public destroy(): void {
+        this.root.unmount();
+    }
 
+    private render(context: ComponentFramework.Context<IInputs>, mode: HostMode, entityRef: EntityRef): void {
+        const acceptAttribute = context.parameters.AcceptedFileTypes.raw ?? "";
+        const theme = (context as unknown as { fluentDesignLanguage?: { tokenTheme?: Theme } }).fluentDesignLanguage?.tokenTheme ?? webLightTheme;
 
-	}
+        const props: AttachmentUploaderProps = {
+            mode,
+            canUpload: this.initializationError == null && (mode === "canvas" || entityRef.id !== ""),
+            maxFileSizeKb: context.parameters.MaxFileSizeKB.raw ?? 0,
+            acceptAttribute,
+            theme,
+            // Defaults to shown, so an unset property behaves like it did before this was added.
+            showSuccessMessage: context.parameters.ShowSuccessMessage.raw !== "0",
+            translate: this.translate,
+            initializationError: this.initializationError,
+            onFiles: this.handleFiles
+        };
 
-	private retrieveEntitySetNameAndRender(context: ComponentFramework.Context<IInputs>, entityName: string) {
-		var thisRef = this;
-		context.utils.getEntityMetadata(entityName).then(function (response) {
-			thisRef.uploadProps.entitySetName = response.EntitySetName;
-			thisRef.renderComponent();
-		},
-			function (errorResponse: any) {
-				console.log(`Error occurred while retrieving the entity metadata. ${errorResponse}`);
-			});
-	}
+        this.root.render(createElement(AttachmentUploader, props));
+    }
 
-	private renderComponent() {
-		ReactDOM.render(
-			React.createElement(
-				AttachmentUploader,
-				this.uploadProps
-			),
-			this.attachmentUploaderContainer
-		);
-	}
-	/** 
-	 * It is called by the framework prior to a control receiving new data. 
-	 * @returns an object based on nomenclature defined in manifest, expecting object[s] for property marked as “bound” or “output”
-	 */
-	public getOutputs(): IOutputs {
-		return {};
-	}
+    /**
+     * Model driven: uploads to Dataverse and refreshes the configured form control.
+     * Canvas: WebAPI is unavailable, so the files are handed back through the output properties
+     * for the app to write with Power Fx.
+     */
+    private handleFiles = async (files: FileInfo[], onProgress: ProgressCallback): Promise<UploadResult[]> => {
+        const context = this.context;
+        const mode = this.resolveMode(context);
 
-	/** 
-	 * Called when the control is to be removed from the DOM tree. Controls should use this call for cleanup.
-	 * i.e. cancelling any pending remote calls, removing listeners, etc.
-	 */
-	public destroy(): void {
-		ReactDOM.unmountComponentAtNode(this.attachmentUploaderContainer);
-	}
+        if (mode === "canvas") {
+            this.selectedFiles = JSON.stringify(files);
+            this.selectedFilesCount = files.length;
+            // Guarantees an output change even when the same files are picked twice in a row.
+            this.lastBatchId++;
+            this.notifyOutputChanged();
+            onProgress(files.length, files.length);
+            return files.map((file) => ({ fileName: file.name, succeeded: true }));
+        }
+
+        // The record id is empty until the form is saved, so re-read it at upload time.
+        const entityRef = getEntityReference(context);
+        const useNoteAttachment = context.parameters.UseNoteAttachment.raw === "1";
+        const needsEntitySetName = useNoteAttachment || !this.isActivityEntity(entityRef.entityName);
+
+        let entitySetName = "";
+        if (needsEntitySetName) {
+            try {
+                entitySetName = await this.ensureEntitySetName(entityRef.entityName);
+            } catch (e) {
+                const error = toErrorMessage(e);
+                return files.map((file) => ({ fileName: file.name, succeeded: false, error }));
+            }
+        }
+
+        const results = await uploadToDataverse(
+            context,
+            {
+                id: entityRef.id,
+                entityName: entityRef.entityName,
+                entitySetName,
+                useNoteAttachment,
+                defaultNoteTitle: context.parameters.DefaultNoteTitle.raw
+            },
+            files,
+            onProgress
+        );
+
+        refreshFormControl(context.parameters.ControlNameForRefresh.raw);
+        return results;
+    };
+
+    private resolveMode(context: ComponentFramework.Context<IInputs>): HostMode {
+        return this.hostModeOverride ?? resolveHostMode(context);
+    }
+
+    private isActivityEntity(entityName: string): boolean {
+        const entity = entityName.toLowerCase();
+        return entity === "email" || entity === "appointment";
+    }
+
+    private ensureEntitySetName(entityName: string): Promise<string> {
+        if (entityName === "") {
+            return Promise.resolve("");
+        }
+
+        if (this.entitySetNamePromise && this.entitySetNameFor === entityName) {
+            return this.entitySetNamePromise;
+        }
+
+        this.entitySetNameFor = entityName;
+        this.entitySetNamePromise = getEntitySetName(this.context, entityName)
+            .then((name) => {
+                this.initializationError = null;
+                return name;
+            })
+            .catch((e: unknown) => {
+                // Allow a later retry.
+                this.entitySetNamePromise = undefined;
+
+                if (isApiUnavailable(e)) {
+                    // The host looked model driven but has no Dataverse APIs, so switch to handing
+                    // the files back through the outputs rather than showing a dead error bar.
+                    this.hostModeOverride = "canvas";
+                    this.initializationError = null;
+                } else {
+                    // Surface the failure instead of leaving the control blank.
+                    this.initializationError = toErrorMessage(e);
+                }
+
+                this.render(this.context, this.resolveMode(this.context), getEntityReference(this.context));
+                throw e;
+            });
+
+        return this.entitySetNamePromise;
+    }
+
+    private applyAllocatedSize(context: ComponentFramework.Context<IInputs>): void {
+        const { allocatedWidth, allocatedHeight } = context.mode;
+        // Canvas apps report the size the maker gave the component; model driven apps report -1.
+        this.container.style.width = allocatedWidth > 0 ? `${allocatedWidth}px` : "100%";
+        this.container.style.height = allocatedHeight > 0 ? `${allocatedHeight}px` : "100%";
+    }
 }
