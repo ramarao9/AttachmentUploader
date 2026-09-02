@@ -2,8 +2,16 @@ import { createElement } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { webLightTheme, type Theme } from "@fluentui/react-components";
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { AttachmentUploader, AttachmentUploaderProps, ProgressCallback } from "./AttachmentUploader";
-import { FileInfo, UploadResult, toErrorMessage, uploadToDataverse } from "./attachmentService";
+import { AttachmentUploader, AttachmentUploaderProps } from "./AttachmentUploader";
+import {
+    FileInfo,
+    ProgressCallback,
+    UploadResult,
+    getMaxUploadFileSize,
+    readFile,
+    toErrorMessage,
+    uploadToDataverse
+} from "./attachmentService";
 import { EntityRef, HostMode, getEntityReference, getEntitySetName, isApiUnavailable, refreshFormControl, resolveHostMode } from "./hostContext";
 import { Translate, makeTranslator } from "./strings";
 
@@ -18,6 +26,10 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
     private entitySetNameFor = "";
     private entitySetNamePromise: Promise<string> | undefined;
     private initializationError: string | null = null;
+
+    /** Organization wide upload cap in bytes, 0 until read. Model driven only. */
+    private maxUploadFileSize = 0;
+    private maxUploadFileSizePromise: Promise<number> | undefined;
 
     /** Set to "canvas" when the host turned out to have no Dataverse APIs after all. */
     private hostModeOverride: HostMode | undefined;
@@ -51,6 +63,7 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
         if (mode === "modeldriven") {
             // Prefetch; failures are reported through initializationError and re-raised at upload time.
             void this.ensureEntitySetName(entityRef.entityName).catch(() => undefined);
+            void this.ensureMaxUploadFileSize();
         }
 
         this.applyAllocatedSize(context);
@@ -77,6 +90,8 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
             mode,
             canUpload: this.initializationError == null && (mode === "canvas" || entityRef.id !== ""),
             maxFileSizeKb: context.parameters.MaxFileSizeKB.raw ?? 0,
+            // The organization cap applies to the base64 payload, which is 4/3 the size of the file.
+            orgMaxFileBytes: this.maxUploadFileSize > 0 ? Math.floor((this.maxUploadFileSize * 3) / 4) : 0,
             acceptAttribute,
             theme,
             // Defaults to shown, so an unset property behaves like it did before this was added.
@@ -97,18 +112,32 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
      * Canvas: WebAPI is unavailable, so the files are handed back through the output properties
      * for the app to write with Power Fx.
      */
-    private handleFiles = async (files: FileInfo[], onProgress: ProgressCallback): Promise<UploadResult[]> => {
+    private handleFiles = async (files: File[], onProgress: ProgressCallback): Promise<UploadResult[]> => {
         const context = this.context;
         const mode = this.resolveMode(context);
 
         if (mode === "canvas") {
-            this.selectedFiles = JSON.stringify(files);
-            this.selectedFilesCount = files.length;
+            // The output property carries the content, so canvas is the one path that still has to
+            // read every file into memory.
+            const fileInfos: FileInfo[] = [];
+            const results: UploadResult[] = [];
+
+            for (let i = 0; i < files.length; i++) {
+                try {
+                    fileInfos.push(await readFile(files[i]));
+                    results.push({ fileName: files[i].name, succeeded: true });
+                } catch (e) {
+                    results.push({ fileName: files[i].name, succeeded: false, error: toErrorMessage(e) });
+                }
+                onProgress(i + 1, files.length);
+            }
+
+            this.selectedFiles = JSON.stringify(fileInfos);
+            this.selectedFilesCount = fileInfos.length;
             // Guarantees an output change even when the same files are picked twice in a row.
             this.lastBatchId++;
             this.notifyOutputChanged();
-            onProgress(files.length, files.length);
-            return files.map((file) => ({ fileName: file.name, succeeded: true }));
+            return results;
         }
 
         // The record id is empty until the form is saved, so re-read it at upload time.
@@ -150,6 +179,23 @@ export class AttachmentUpload implements ComponentFramework.StandardControl<IInp
     private isActivityEntity(entityName: string): boolean {
         const entity = entityName.toLowerCase();
         return entity === "email" || entity === "appointment";
+    }
+
+    /**
+     * Read once per control instance. getMaxUploadFileSize never rejects - an unreadable setting
+     * resolves to 0, meaning "unknown", so the drop zone simply does not apply that check.
+     */
+    private ensureMaxUploadFileSize(): Promise<number> {
+        this.maxUploadFileSizePromise ??= getMaxUploadFileSize(this.context).then((size) => {
+            this.maxUploadFileSize = size;
+            if (size > 0) {
+                // Re-render so the drop zone starts enforcing the real limit.
+                this.render(this.context, this.resolveMode(this.context), getEntityReference(this.context));
+            }
+            return size;
+        });
+
+        return this.maxUploadFileSizePromise;
     }
 
     private ensureEntitySetName(entityName: string): Promise<string> {

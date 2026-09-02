@@ -24,6 +24,7 @@ const ENGLISH: Record<string, string> = {
     drop_files_here: "Drop the files here ...",
     drop_files_here_or_click_to_upload: "Drop files here or click to upload.",
     file_too_large: "is larger than the allowed size.",
+    file_exceeds_org_limit: "exceeds the maximum upload size configured for this environment.",
     file_type_not_allowed: "is not an accepted file type.",
     files_uploaded: "file(s) uploaded."
 };

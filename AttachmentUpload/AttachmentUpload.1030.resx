@@ -138,6 +138,9 @@
   <data name="file_too_large" xml:space="preserve">
     <value>er større end den tilladte størrelse.</value>
   </data>
+  <data name="file_exceeds_org_limit" xml:space="preserve">
+    <value>overskrider den maksimale uploadstørrelse, der er konfigureret for dette miljø.</value>
+  </data>
   <data name="file_type_not_allowed" xml:space="preserve">
     <value>er ikke en tilladt filtype.</value>
   </data>

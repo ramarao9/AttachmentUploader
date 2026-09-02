@@ -102,6 +102,9 @@ interface XrmLike {
         getControl?: (name: string) => XrmControl | null | undefined;
         ui?: { controls?: { get(): XrmControl[] } };
     };
+    Utility?: {
+        getGlobalContext?: () => { getClientUrl?: () => string } | undefined;
+    };
 }
 
 const LOG_PREFIX = "[AttachmentUpload]";
@@ -110,13 +113,16 @@ const LOG_PREFIX = "[AttachmentUpload]";
  * Locates the Xrm global. A PCF control usually shares the form's window, but on forms rendered
  * inside a nested iframe (dialogs, side panes, some custom page hosts) `window.Xrm` is undefined
  * while the parent frame still has it, so walk up before giving up.
+ *
+ * Takes a predicate because callers need different parts of Xrm, and a frame can expose one
+ * without the other.
  */
-function findXrm(): XrmLike | undefined {
+function findXrm(hasWhatIsNeeded: (xrm: XrmLike) => boolean): XrmLike | undefined {
     const frames: (Window | null)[] = [window, window.parent, window.top];
     for (const frame of frames) {
         try {
             const xrm = (frame as unknown as { Xrm?: XrmLike } | null)?.Xrm;
-            if (typeof xrm?.Page?.getControl === "function") {
+            if (xrm && hasWhatIsNeeded(xrm)) {
                 return xrm;
             }
         } catch {
@@ -124,6 +130,27 @@ function findXrm(): XrmLike | undefined {
         }
     }
     return undefined;
+}
+
+/**
+ * Base url for the Web API calls that `context.webAPI` cannot make, namely the block upload
+ * actions. Xrm reports the deployment specific url, which matters wherever the organization lives
+ * under a path segment rather than on its own host; the page origin is only a fallback for when
+ * Xrm cannot be reached at all.
+ */
+export function getClientUrl(): string {
+    const xrm = findXrm((candidate) => typeof candidate.Utility?.getGlobalContext === "function");
+
+    try {
+        const clientUrl = xrm?.Utility?.getGlobalContext?.()?.getClientUrl?.();
+        if (clientUrl) {
+            return clientUrl.replace(/\/+$/, "");
+        }
+    } catch (e) {
+        console.warn(`${LOG_PREFIX} getClientUrl() failed, falling back to the page origin.`, e);
+    }
+
+    return window.location.origin;
 }
 
 /**
@@ -139,7 +166,7 @@ export function refreshFormControl(controlName: string | null): void {
         return;
     }
 
-    const xrm = findXrm();
+    const xrm = findXrm((candidate) => typeof candidate.Page?.getControl === "function");
     if (!xrm) {
         console.warn(`${LOG_PREFIX} Xrm.Page is not available, cannot refresh "${name}".`);
         return;

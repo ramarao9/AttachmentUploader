@@ -83,6 +83,9 @@
     <data name="file_too_large" xml:space="preserve">
         <value>is larger than the allowed size.</value>
     </data>
+    <data name="file_exceeds_org_limit" xml:space="preserve">
+        <value>exceeds the maximum upload size configured for this environment.</value>
+    </data>
     <data name="file_type_not_allowed" xml:space="preserve">
         <value>is not an accepted file type.</value>
     </data>

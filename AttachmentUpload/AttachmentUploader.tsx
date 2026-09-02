@@ -14,17 +14,21 @@ import {
 } from "@fluentui/react-components";
 import { CloudArrowUp48Regular } from "@fluentui/react-icons";
 import {
-    FileInfo,
+    ProgressCallback,
     UploadResult,
     matchesAccept,
     parseAcceptTokens,
-    readFile,
     toErrorMessage
 } from "./attachmentService";
 import { HostMode } from "./hostContext";
 import { Translate } from "./strings";
 
-export type ProgressCallback = (completed: number, total: number) => void;
+/**
+ * Canvas has no Dataverse API: the files come back as base64 in an output property, which will not
+ * survive a large file. Without a maker set limit, cap it here so a big drop fails with a message
+ * instead of locking up the browser.
+ */
+const CANVAS_DEFAULT_MAX_BYTES = 10 * 1024 * 1024;
 
 export interface AttachmentUploaderProps {
     mode: HostMode;
@@ -32,6 +36,11 @@ export interface AttachmentUploaderProps {
     canUpload: boolean;
     /** 0 means no limit. */
     maxFileSizeKb: number;
+    /**
+     * Model driven only: the largest raw file the environment accepts, already scaled down from the
+     * organization's base64 cap. 0 while it is still being read, or if it could not be read.
+     */
+    orgMaxFileBytes: number;
     /** Comma separated `.ext` / `mime/type` / `mime/*` list. Empty accepts everything. */
     acceptAttribute: string;
     theme: Theme;
@@ -48,7 +57,7 @@ export interface AttachmentUploaderProps {
     translate: Translate;
     /** Set when the control could not initialize, for example when entity metadata failed to load. */
     initializationError?: string | null;
-    onFiles: (files: FileInfo[], onProgress: ProgressCallback) => Promise<UploadResult[]>;
+    onFiles: (files: File[], onProgress: ProgressCallback) => Promise<UploadResult[]>;
 }
 
 const useStyles = makeStyles({
@@ -119,6 +128,7 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
         mode,
         canUpload,
         maxFileSizeKb,
+        orgMaxFileBytes,
         acceptAttribute,
         theme,
         showSuccessMessage,
@@ -135,8 +145,14 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
     const [total, setTotal] = useState(0);
     const [failures, setFailures] = useState<string[]>([]);
     const [successCount, setSuccessCount] = useState(0);
+    const [detail, setDetail] = useState("");
 
-    const maxBytes = useMemo(() => (maxFileSizeKb > 0 ? maxFileSizeKb * 1024 : 0), [maxFileSizeKb]);
+    const maxBytes = useMemo(() => {
+        if (maxFileSizeKb > 0) {
+            return maxFileSizeKb * 1024;
+        }
+        return mode === "canvas" ? CANVAS_DEFAULT_MAX_BYTES : 0;
+    }, [maxFileSizeKb, mode]);
     const acceptTokens = useMemo(() => parseAcceptTokens(acceptAttribute), [acceptAttribute]);
 
     // Reading the files and the app uploading them are two separate phases of the same operation in
@@ -154,6 +170,10 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
             for (const file of droppedFiles) {
                 if (maxBytes > 0 && file.size > maxBytes) {
                     problems.push(`${file.name} ${translate("file_too_large")}`);
+                } else if (orgMaxFileBytes > 0 && file.size > orgMaxFileBytes) {
+                    // Distinct from the maker set limit: the fix here is an administrator raising
+                    // the environment's maximum upload size, not editing the control's property.
+                    problems.push(`${file.name} ${translate("file_exceeds_org_limit")}`);
                 } else if (!matchesAccept(file, acceptTokens)) {
                     problems.push(`${file.name} ${translate("file_type_not_allowed")}`);
                 } else {
@@ -173,44 +193,35 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
             setTotal(allowed.length);
 
             try {
-                const fileInfos: FileInfo[] = [];
-                for (let i = 0; i < allowed.length; i++) {
-                    try {
-                        fileInfos.push(await readFile(allowed[i]));
-                    } catch (e) {
-                        problems.push(`${allowed[i].name}: ${toErrorMessage(e)}`);
-                    }
-                    setCompleted(i + 1);
-                }
+                // The files are handed over unread: reading them all up front would hold the whole
+                // batch in memory as base64, which is roughly 2.7x their size. The consumer decides
+                // how to read each one.
+                const results = await onFiles(allowed, (done, count, note) => {
+                    setCompleted(done);
+                    setTotal(count);
+                    setDetail(note ?? "");
+                });
 
-                if (fileInfos.length > 0) {
-                    setCompleted(0);
-                    setTotal(fileInfos.length);
-                    const results = await onFiles(fileInfos, (done, count) => {
-                        setCompleted(done);
-                        setTotal(count);
-                    });
-
-                    let succeeded = 0;
-                    for (const result of results) {
-                        if (result.succeeded) {
-                            succeeded++;
-                        } else {
-                            problems.push(result.error ? `${result.fileName}: ${result.error}` : result.fileName);
-                        }
+                let succeeded = 0;
+                for (const result of results) {
+                    if (result.succeeded) {
+                        succeeded++;
+                    } else {
+                        problems.push(result.error ? `${result.fileName}: ${result.error}` : result.fileName);
                     }
-                    setSuccessCount(succeeded);
                 }
+                setSuccessCount(succeeded);
             } catch (e) {
                 problems.push(toErrorMessage(e));
             } finally {
                 setBusy(false);
                 setCompleted(0);
                 setTotal(0);
+                setDetail("");
                 setFailures(problems);
             }
         },
-        [acceptTokens, maxBytes, onFiles, translate]
+        [acceptTokens, maxBytes, onFiles, orgMaxFileBytes, translate]
     );
 
     // useDropzone expects a void-returning handler, so the promise is explicitly discarded.
@@ -233,7 +244,7 @@ export const AttachmentUploader = (props: AttachmentUploaderProps): ReactElement
     // The control's own phase wins while it is reading files, because only it knows those counts.
     // Once it has handed them over, the app is the only thing that knows what is happening.
     const busyLabel = busy
-        ? `${translate("uploading")} (${completed}/${total})`
+        ? [`${translate("uploading")} (${completed}/${total})`, detail].filter(Boolean).join(" ")
         : [translate("uploading"), externalBusyFileName].filter(Boolean).join(" ");
 
     return (
